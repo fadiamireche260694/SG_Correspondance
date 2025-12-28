@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}إضافة مراسلة واردة{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    .required-field::after {
+        content: " *";
+        color: red;
+    }
+    .form-control:invalid {
+        border-color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="form-container">
+            <div class="page-header mb-4">
+                <h2><i class="fas fa-inbox me-2"></i>إضافة مراسلة واردة</h2>
+                <p class="text-muted">أدخل تفاصيل المراسلة الواردة الجديدة</p>
+            </div>
+            
+            <form method="POST" action="{{ url_for('letters.add_incoming') }}" enctype="multipart/form-data" id="letterForm" novalidate>
+                {{ form.hidden_tag() }}
+                
+                <div class="row">
+                    <!-- المعلومات الأساسية -->
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0"><i class="fas fa-info-circle"></i> المعلومات الأساسية</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label required-field">رقم الرسالة</label>
+                                    {{ form.reference_number(class="form-control", placeholder="أدخل رقم الرسالة", required=true) }}
+                                    <div class="invalid-feedback" id="reference_number_error">
+                                        الرجاء إدخال رقم الرسالة
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label required-field">الباعث</label>
+                                    {{ form.sender(class="form-control", placeholder="أدخل اسم الباعث", required=true) }}
+                                    <div class="invalid-feedback" id="sender_error">
+                                        الرجاء إدخال اسم الباعث
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">المستلم</label>
+                                    {{ form.receiver(class="form-control", placeholder="أدخل اسم المستلم") }}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label required-field">الموضوع</label>
+                                    {{ form.subject(class="form-control", placeholder="أدخل موضوع المراسلة", required=true) }}
+                                    <div class="invalid-feedback" id="subject_error">
+                                        الرجاء إدخال موضوع المراسلة
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- التواريخ -->
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> التواريخ</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label required-field">تاريخ الرسالة</label>
+                                    <input type="date" name="letter_date" class="form-control" required 
+                                           value="{{ form.letter_date.data.strftime('%Y-%m-%d') if form.letter_date.data else '' }}">
+                                    <div class="invalid-feedback" id="letter_date_error">
+                                        الرجاء اختيار تاريخ الرسالة
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label required-field">تاريخ الوصول</label>
+                                    <input type="date" name="access_date" class="form-control" required 
+                                           value="{{ form.access_date.data.strftime('%Y-%m-%d') if form.access_date.data else '' }}">
+                                    <div class="invalid-feedback" id="access_date_error">
+                                        الرجاء اختيار تاريخ الوصول
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">تاريخ الرد</label>
+                                    <input type="date" name="response_date" class="form-control" 
+                                           value="{{ form.response_date.data.strftime('%Y-%m-%d') if form.response_date.data else '' }}">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">رقم الرد</label>
+                                    {{ form.response_number(class="form-control", placeholder="أدخل رقم الرد إذا وجد") }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- المحتوى -->
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="fas fa-file-alt"></i> المحتوى</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">محتوى المراسلة</label>
+                            {{ form.content(class="form-control", rows="5", placeholder="أدخل محتوى المراسلة...") }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- الملفات -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0"><i class="fas fa-image"></i> صورة المراسلة</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">رفع صورة المراسلة</label>
+                                    <input type="file" name="letter_image" class="form-control" 
+                                           accept=".jpg,.jpeg,.png,.gif,.pdf">
+                                    <div class="form-text">الامتدادات المسموح بها: JPG, JPEG, PNG, GIF, PDF</div>
+                                    <div id="imagePreview" class="mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0"><i class="fas fa-paperclip"></i> المرفقات</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">رفع مرفقات</label>
+                                    <input type="file" name="attachments" class="form-control"
+                                           accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt">
+                                    <div class="form-text">الامتدادات المسموح بها: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT</div>
+                                    <div id="attachmentPreview" class="mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- أزرار الإجراء -->
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ url_for('letters.list_letters') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-right"></i> رجوع
+                    </a>
+                    <div>
+                        <button type="reset" class="btn btn-outline-danger me-2">
+                            <i class="fas fa-undo"></i> إعادة تعيين
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> حفظ المراسلة
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// معاينة الصور
+document.querySelector('input[name="letter_image"]').addEventListener('change', function(e) {
+    previewFile(this, 'imagePreview');
+});
+
+// معاينة المرفقات
+document.querySelector('input[name="attachments"]').addEventListener('change', function(e) {
+    previewFile(this, 'attachmentPreview');
+});
+
+// التحقق من النموذج قبل الإرسال
+document.getElementById('letterForm').addEventListener('submit', function(e) {
+    // التحقق من الحقول المطلوبة
+    const requiredFields = document.querySelectorAll('[required]');
+    let isValid = true;
+    
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            field.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            field.classList.remove('is-invalid');
+        }
+    });
+    
+    if (!isValid) {
+        e.preventDefault();
+        alert('الرجاء ملء جميع الحقول المطلوبة');
+    }
+});
+
+// إزالة رسالة الخطأ عند كتابة الحقول
+document.querySelectorAll('[required]').forEach(field => {
+    field.addEventListener('input', function() {
+        if (this.value.trim()) {
+            this.classList.remove('is-invalid');
+        }
+    });
+});
+</script>
+{% endblock %}

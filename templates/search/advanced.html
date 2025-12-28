@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}البحث المتقدم{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h2><i class="fas fa-search me-2"></i>البحث المتقدم</h2>
+    <p class="text-muted">ابحث في المراسلات باستخدام معايير متعددة</p>
+</div>
+
+<div class="row">
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-filter"></i> معايير البحث</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('search.advanced_search') }}" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">نوع البحث</label>
+                        {{ form.search_type(class="form-select") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">كلمة البحث</label>
+                        {{ form.keyword(class="form-control", placeholder="أدخل كلمة البحث...") }}
+                        {% if form.keyword.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.keyword.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">نوع المراسلة</label>
+                        {{ form.letter_type(class="form-select") }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">من تاريخ</label>
+                            {{ form.start_date(class="form-control", type="date") }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">إلى تاريخ</label>
+                            {{ form.end_date(class="form-control", type="date") }}
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> بحث
+                        </button>
+                        <button type="reset" class="btn btn-outline-secondary">
+                            <i class="fas fa-undo"></i> إعادة تعيين
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-lightbulb"></i> نصائح البحث</h5>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>استخدم * للبحث الجزئي (مثال: شركة*)</li>
+                    <li>ابحث برقم الرسالة أو رقم الوصول بدقة</li>
+                    <li>استخدم التواريخ للبحث في فترة زمنية محددة</li>
+                    <li>اترك حقول التواريخ فارغة للبحث في جميع التواريخ</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> نتائج البحث</h5>
+                    {% if results %}
+                    <span class="badge bg-light text-dark">{{ results|length }} نتيجة</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if results %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>رقم الرسالة</th>
+                                <th>رقم الوصول</th>
+                                <th>النوع</th>
+                                <th>الباعث</th>
+                                <th>الموضوع</th>
+                                <th>تاريخ الرسالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for letter in results %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td><strong>{{ letter.reference_number }}</strong></td>
+                                <td><code>{{ letter.access_number }}</code></td>
+                                <td>
+                                    {% if letter.letter_type == 'incoming' %}
+                                    <span class="badge bg-primary">وارد</span>
+                                    {% else %}
+                                    <span class="badge bg-success">صادر</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ letter.sender }}</td>
+                                <td>{{ letter.subject[:50] }}{% if letter.subject|length > 50 %}...{% endif %}</td>
+                                <td>{{ letter.letter_date.strftime('%Y/%m/%d') }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('letters.view_letter', letter_id=letter.id) }}" 
+                                           class="btn btn-info" title="عرض">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% elif request.method == 'POST' %}
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5>لا توجد نتائج</h5>
+                    <p class="text-muted">لم يتم العثور على مراسلات تطابق معايير البحث</p>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5>أدخل معايير البحث</h5>
+                    <p class="text-muted">استخدم النموذج على اليسار لبدء البحث</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if results %}
+        <div class="mt-4">
+            <div class="alert alert-success">
+                <h6><i class="fas fa-chart-bar"></i> إحصائيات البحث:</h6>
+                <ul class="mb-0">
+                    <li>عدد النتائج: {{ results|length }}</li>
+                    <li>آخر تحديث: {{ now.strftime('%Y/%m/%d %H:%M') }}</li>
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

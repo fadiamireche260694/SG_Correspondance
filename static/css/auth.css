@@ -1,0 +1,101 @@
+/* تنسيقات صفحات المصادقة */
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 400px;
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.auth-header {
+    text-align: center;
+    padding: 30px 20px 20px;
+}
+
+.auth-body {
+    padding: 20px;
+}
+
+.auth-footer {
+    text-align: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
+
+.auth-logo {
+    font-size: 2.5rem;
+    color: #007bff;
+    margin-bottom: 15px;
+}
+
+.auth-title {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.auth-subtitle {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* تنسيقات خاصة للنماذج في صفحات المصادقة */
+.auth-form .form-control {
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.auth-form .form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+}
+
+.auth-form .form-check-input:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.auth-form .btn {
+    padding: 12px;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+/* تنسيقات للأخطاء في النماذج */
+.invalid-feedback {
+    display: block;
+    margin-top: 5px;
+}
+
+/* تنسيقات للروابط في صفحات المصادقة */
+.auth-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-link:hover {
+    text-decoration: underline;
+}
+
+/* تنسيقات responsive لصفحات المصادقة */
+@media (max-width: 576px) {
+    .auth-card {
+        margin: 10px;
+    }
+    
+    .auth-container {
+        padding: 10px;
+    }
+}

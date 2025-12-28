@@ -1,0 +1,187 @@
+{% extends "letters/add_incoming.html" %}
+
+{% block title %}إضافة مراسلة صادرة{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="form-container">
+            <div class="page-header mb-4">
+                <h2><i class="fas fa-paper-plane me-2"></i>إضافة مراسلة صادرة</h2>
+                <p class="text-muted">أدخل تفاصيل المراسلة الصادرة الجديدة</p>
+            </div>
+            
+            <form method="POST" action="{{ url_for('letters.add_outgoing') }}" enctype="multipart/form-data" novalidate>
+                {{ form.hidden_tag() }}
+                
+                <div class="row">
+                    <!-- المعلومات الأساسية -->
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0"><i class="fas fa-info-circle"></i> المعلومات الأساسية</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label required-field">رقم الرسالة</label>
+                                    {{ form.reference_number(class="form-control", placeholder="أدخل رقم الرسالة") }}
+                                    {% if form.reference_number.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.reference_number.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label required-field">الباعث</label>
+                                    {{ form.sender(class="form-control", placeholder="أدخل اسم الباعث") }}
+                                    {% if form.sender.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.sender.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label required-field">المستلم</label>
+                                    {{ form.receiver(class="form-control", placeholder="أدخل اسم المستلم") }}
+                                    {% if form.receiver.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.receiver.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label required-field">الموضوع</label>
+                                    {{ form.subject(class="form-control", placeholder="أدخل موضوع المراسلة") }}
+                                    {% if form.subject.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.subject.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- التواريخ -->
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> التواريخ</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label required-field">تاريخ الرسالة</label>
+                                    {{ form.letter_date(class="form-control", type="date") }}
+                                    {% if form.letter_date.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.letter_date.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label required-field">تاريخ الوصول</label>
+                                    {{ form.access_date(class="form-control", type="date") }}
+                                    {% if form.access_date.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.access_date.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">تاريخ الرد</label>
+                                    {{ form.response_date(class="form-control", type="date") }}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">رقم الرد</label>
+                                    {{ form.response_number(class="form-control", placeholder="أدخل رقم الرد إذا وجد") }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- المحتوى -->
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="fas fa-file-alt"></i> المحتوى</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">محتوى المراسلة</label>
+                            {{ form.content(class="form-control", rows="5", placeholder="أدخل محتوى المراسلة...") }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- الملفات -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0"><i class="fas fa-image"></i> صورة المراسلة</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">رفع صورة المراسلة</label>
+                                    {{ form.letter_image(class="form-control") }}
+                                    <div class="form-text">الامتدادات المسموح بها: JPG, JPEG, PNG, GIF, PDF</div>
+                                    <div id="imagePreview" class="mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0"><i class="fas fa-paperclip"></i> المرفقات</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">رفع مرفقات</label>
+                                    {{ form.attachments(class="form-control") }}
+                                    <div class="form-text">الامتدادات المسموح بها: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT</div>
+                                    <div id="attachmentPreview" class="mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- أزرار الإجراء -->
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ url_for('letters.list_letters') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-right"></i> رجوع
+                    </a>
+                    <div>
+                        <button type="reset" class="btn btn-outline-danger me-2">
+                            <i class="fas fa-undo"></i> إعادة تعيين
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> حفظ المراسلة
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

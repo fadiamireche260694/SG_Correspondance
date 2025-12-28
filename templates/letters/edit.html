@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}تعديل مراسلة - {{ letter.reference_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    .required-field::after {
+        content: " *";
+        color: red;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="form-container">
+            <div class="page-header mb-4">
+                <h2>
+                    <i class="fas fa-edit me-2"></i>
+                    تعديل مراسلة {{ 'واردة' if letter.letter_type == 'incoming' else 'صادرة' }}
+                </h2>
+                <p class="text-muted">رقم المراسلة: {{ letter.reference_number }} | رقم الوصول: {{ letter.access_number }}</p>
+            </div>
+            
+            <form method="POST" action="{{ url_for('letters.edit_letter', letter_id=letter.id) }}" enctype="multipart/form-data" novalidate>
+                {{ form.hidden_tag() }}
+                
+                <div class="row">
+                    <!-- المعلومات الأساسية -->
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header {% if letter.letter_type == 'incoming' %}bg-primary{% else %}bg-success{% endif %} text-white">
+                                <h5 class="mb-0"><i class="fas fa-info-circle"></i> المعلومات الأساسية</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label required-field">رقم الرسالة</label>
+                                    {{ form.reference_number(class="form-control", value=letter.reference_number) }}
+                                    {% if form.reference_number.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.reference_number.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label required-field">الباعث</label>
+                                    {{ form.sender(class="form-control", value=letter.sender) }}
+                                    {% if form.sender.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.sender.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">المستلم</label>
+                                    {{ form.receiver(class="form-control", value=letter.receiver or '') }}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label required-field">الموضوع</label>
+                                    {{ form.subject(class="form-control", value=letter.subject) }}
+                                    {% if form.subject.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.subject.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- التواريخ -->
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> التواريخ</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label required-field">تاريخ الرسالة</label>
+                                    {{ form.letter_date(class="form-control", type="date", value=letter.letter_date.strftime('%Y-%m-%d')) }}
+                                    {% if form.letter_date.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.letter_date.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label required-field">تاريخ الوصول</label>
+                                    {{ form.access_date(class="form-control", type="date", value=letter.access_date.strftime('%Y-%m-%d')) }}
+                                    {% if form.access_date.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.access_date.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">تاريخ الرد</label>
+                                    {% if letter.response_date %}
+                                    {{ form.response_date(class="form-control", type="date", value=letter.response_date.strftime('%Y-%m-%d')) }}
+                                    {% else %}
+                                    {{ form.response_date(class="form-control", type="date") }}
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">رقم الرد</label>
+                                    {{ form.response_number(class="form-control", value=letter.response_number or '') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- المحتوى -->
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="fas fa-file-alt"></i> المحتوى</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">محتوى المراسلة</label>
+                            {{ form.content(class="form-control", rows="5") }}
+                            {% if letter.content %}
+                            <textarea id="originalContent" style="display: none;">{{ letter.content }}</textarea>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- الملفات الحالية -->
+                {% if letter.letter_image or attachments %}
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="fas fa-folder-open"></i> الملفات الحالية</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% if letter.letter_image %}
+                            <div class="col-md-6 mb-3">
+                                <div class="alert alert-info">
+                                    <strong>صورة المراسلة الحالية:</strong><br>
+                                    {{ letter.letter_image }}
+                                    <div class="mt-2">
+                                        <a href="{{ url_for('static', filename='uploads/letters/' + letter.letter_image) }}" 
+                                           target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> معاينة
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if attachments %}
+                            <div class="col-md-6 mb-3">
+                                <div class="alert alert-success">
+                                    <strong>المرفقات الحالية:</strong>
+                                    <ul class="mb-0 mt-2">
+                                        {% for attachment in attachments %}
+                                        <li>
+                                            {{ attachment }}
+                                            <a href="{{ url_for('static', filename='uploads/attachments/' + attachment) }}" 
+                                               target="_blank" class="btn btn-sm btn-outline-success btn-sm">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- تحديث الملفات -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0"><i class="fas fa-image"></i> تحديث صورة المراسلة</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">رفع صورة جديدة (اختياري)</label>
+                                    {{ form.letter_image(class="form-control") }}
+                                    <div class="form-text">اترك الحال فارغاً للحفاظ على الصورة الحالية</div>
+                                    <div id="imagePreview" class="mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header {% if letter.letter_type == 'incoming' %}bg-success{% else %}bg-primary{% endif %} text-white">
+                                <h5 class="mb-0"><i class="fas fa-paperclip"></i> تحديث المرفقات</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">رفع مرفقات جديدة (اختياري)</label>
+                                    {{ form.attachments(class="form-control") }}
+                                    <div class="form-text">اترك الحال فارغاً للحفاظ على المرفقات الحالية</div>
+                                    <div id="attachmentPreview" class="mt-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- أزرار الإجراء -->
+                <div class="d-flex justify-content-between mt-4">
+                    <div>
+                        <a href="{{ url_for('letters.view_letter', letter_id=letter.id) }}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-times"></i> إلغاء
+                        </a>
+                        <a href="{{ url_for('letters.list_letters') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right"></i> رجوع للقائمة
+                        </a>
+                    </div>
+                    <div>
+                        <button type="reset" class="btn btn-outline-danger me-2">
+                            <i class="fas fa-undo"></i> إعادة تعيين
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> حفظ التعديلات
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// معاينة الصور
+document.getElementById('letter_image').addEventListener('change', function(e) {
+    previewFile(this, 'imagePreview');
+});
+
+// معاينة المرفقات
+document.getElementById('attachments').addEventListener('change', function(e) {
+    previewFile(this, 'attachmentPreview');
+});
+
+// استعادة المحتوى الأصلي
+document.querySelectorAll('button[type="reset"]').forEach(button => {
+    button.addEventListener('click', function() {
+        const originalContent = document.getElementById('originalContent');
+        if (originalContent) {
+            document.getElementById('content').value = originalContent.value;
+        }
+    });
+});
+</script>
+{% endblock %}

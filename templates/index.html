@@ -1,0 +1,643 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة التحكم - نظام المراسلات{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card-stat {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-left: 4px solid;
+    }
+    
+    .card-stat:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    }
+    
+    .border-start-primary { border-left-color: #0d6efd !important; }
+    .border-start-success { border-left-color: #198754 !important; }
+    .border-start-warning { border-left-color: #ffc107 !important; }
+    .border-start-info { border-left-color: #0dcaf0 !important; }
+    
+    .stat-icon {
+        font-size: 2.5rem;
+        opacity: 0.8;
+    }
+    
+    .list-group-item-action:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+        border-left: 3px solid #0d6efd;
+        padding-left: 17px;
+    }
+    
+    .btn-quick-action {
+        transition: all 0.3s ease;
+        border-radius: 10px;
+        min-height: 120px;
+    }
+    
+    .btn-quick-action:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    @media (max-width: 768px) {
+        .btn-quick-action {
+            min-height: 80px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="page-header mb-4">
+            <h2><i class="fas fa-tachometer-alt me-2"></i>لوحة التحكم</h2>
+            <p class="text-muted">مرحباً {% if current_user.is_authenticated %}{{ current_user.full_name }}{% else %}زائر{% endif %}، هذه نظرة عامة على نظامك</p>
+        </div>
+    </div>
+</div>
+
+<!-- إحصائيات سريعة -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card card-stat border-start-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-primary fw-bold mb-2">المراسلات الواردة</h6>
+                        <h2 class="fw-bold mb-0" id="incomingCount">
+                            {% if current_user.is_authenticated %}{{ get_stats().incoming_count }}{% else %}0{% endif %}
+                        </h2>
+                        <p class="text-muted small mt-2 mb-0">
+                            <i class="fas fa-chart-line me-1 text-success"></i>
+                            هذا الشهر: {% if current_user.is_authenticated %}{{ get_stats().monthly_incoming }}{% else %}0{% endif %}
+                        </p>
+                    </div>
+                    <div class="stat-icon text-primary">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0">
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('letters.list_letters') }}?type=incoming" class="text-decoration-none small">
+                    <i class="fas fa-external-link-alt me-1"></i> عرض التفاصيل
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card card-stat border-start-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-success fw-bold mb-2">المراسلات الصادرة</h6>
+                        <h2 class="fw-bold mb-0" id="outgoingCount">
+                            {% if current_user.is_authenticated %}{{ get_stats().outgoing_count }}{% else %}0{% endif %}
+                        </h2>
+                        <p class="text-muted small mt-2 mb-0">
+                            <i class="fas fa-chart-line me-1 text-success"></i>
+                            هذا الشهر: {% if current_user.is_authenticated %}{{ get_stats().monthly_outgoing }}{% else %}0{% endif %}
+                        </p>
+                    </div>
+                    <div class="stat-icon text-success">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0">
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('letters.list_letters') }}?type=outgoing" class="text-decoration-none small">
+                    <i class="fas fa-external-link-alt me-1"></i> عرض التفاصيل
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card card-stat border-start-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-warning fw-bold mb-2">الأرشيف</h6>
+                        <h2 class="fw-bold mb-0" id="archivedCount">
+                            {% if current_user.is_authenticated %}{{ get_stats().archived_count }}{% else %}0{% endif %}
+                        </h2>
+                        {% if current_user.is_authenticated and get_stats().total_letters > 0 %}
+                        <p class="text-muted small mt-2 mb-0">
+                            <i class="fas fa-percentage me-1 text-warning"></i>
+                            نسبة: {{ ((get_stats().archived_count / get_stats().total_letters) * 100)|round(1) }}%
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div class="stat-icon text-warning">
+                        <i class="fas fa-archive"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0">
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('archive.archive_list') }}" class="text-decoration-none small">
+                    <i class="fas fa-external-link-alt me-1"></i> عرض الأرشيف
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card card-stat border-start-info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-info fw-bold mb-2">المستخدمون</h6>
+                        <h2 class="fw-bold mb-0" id="usersCount">
+                            {% if current_user.is_authenticated %}{{ get_stats().users_count }}{% else %}0{% endif %}
+                        </h2>
+                        {% if current_user.is_authenticated and get_stats().users_count > 0 %}
+                        <p class="text-muted small mt-2 mb-0">
+                            <i class="fas fa-envelope me-1 text-info"></i>
+                            متوسط: {{ (get_stats().total_letters / get_stats().users_count)|round(1) }} مراسلة/مستخدم
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div class="stat-icon text-info">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0">
+                {% if current_user.is_authenticated %}
+                <a href="#" class="text-decoration-none small">
+                    <i class="fas fa-external-link-alt me-1"></i> إدارة المستخدمين
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مخطط الإحصائيات -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow h-100">
+            <div class="card-header bg-white py-3 border-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 fw-bold text-primary">
+                        <i class="fas fa-chart-pie me-2"></i>توزيع المراسلات
+                    </h6>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                data-bs-toggle="dropdown">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('letters.list_letters') }}">
+                                    <i class="fas fa-list me-2"></i> عرض جميع المراسلات
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('letters.add_incoming') }}">
+                                    <i class="fas fa-plus me-2"></i> إضافة مراسلة جديدة
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="chart-container" style="height: 200px;">
+                            <canvas id="lettersChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item border-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>إجمالي المراسلات:</span>
+                                    <strong class="text-primary" id="totalLetters">
+                                        {% if current_user.is_authenticated %}{{ get_stats().total_letters }}{% else %}0{% endif %}
+                                    </strong>
+                                </div>
+                            </div>
+                            <div class="list-group-item border-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>المراسلات النشطة:</span>
+                                    <strong class="text-success" id="activeLetters">
+                                        {% if current_user.is_authenticated %}{{ get_stats().incoming_count + get_stats().outgoing_count }}{% else %}0{% endif %}
+                                    </strong>
+                                </div>
+                            </div>
+                            <div class="list-group-item border-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>نسبة الأرشيف:</span>
+                                    <strong class="text-warning" id="archivePercent">
+                                        {% if current_user.is_authenticated and get_stats().total_letters > 0 %}
+                                            {{ ((get_stats().archived_count / get_stats().total_letters) * 100)|round(1) }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                            </div>
+                            <div class="list-group-item border-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>متوسط المراسلات:</span>
+                                    <strong class="text-info" id="avgLetters">
+                                        {% if current_user.is_authenticated and get_stats().users_count > 0 %}
+                                            {{ (get_stats().total_letters / get_stats().users_count)|round(1) }}
+                                        {% else %}
+                                            0
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- آخر المراسلات -->
+        <div class="card shadow h-100">
+            <div class="card-header bg-white py-3 border-0">
+                <h6 class="m-0 fw-bold text-primary">
+                    <i class="fas fa-history me-2"></i>آخر المراسلات
+                </h6>
+            </div>
+            <div class="card-body p-0" style="max-height: 300px; overflow-y: auto;">
+                <div class="list-group list-group-flush">
+                    {% if current_user.is_authenticated %}
+                        {% set latest_letters = get_latest_letters(5) %}
+                        {% if latest_letters and latest_letters|length > 0 %}
+                            {% for letter in latest_letters %}
+                            <a href="{{ url_for('letters.view_letter', letter_id=letter.id) }}" 
+                               class="list-group-item list-group-item-action border-0 py-3">
+                                <div class="d-flex w-100 justify-content-between align-items-start">
+                                    <div class="me-3">
+                                        <span class="badge bg-{{ 'primary' if letter.letter_type == 'incoming' else 'success' }} me-2">
+                                            {{ 'وارد' if letter.letter_type == 'incoming' else 'صادر' }}
+                                        </span>
+                                        <h6 class="mb-1">{{ letter.subject[:40] }}{% if letter.subject|length > 40 %}...{% endif %}</h6>
+                                        <p class="mb-0 text-muted small">
+                                            <i class="fas fa-hashtag me-1"></i>{{ letter.reference_number }} |
+                                            <i class="fas fa-user me-1 ms-2"></i>{{ letter.sender[:15] }}
+                                        </p>
+                                    </div>
+                                    <small class="text-muted text-nowrap">{{ letter.created_at|date_format('%Y-%m-%d') }}</small>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">لا توجد مراسلات</h6>
+                            <p class="small text-muted mb-3">ابدأ بإضافة أول مراسلة لك</p>
+                            <a href="{{ url_for('letters.add_incoming') }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus me-1"></i> إضافة مراسلة
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-lock fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">غير مسموح</h6>
+                        <p class="small text-muted mb-3">يجب تسجيل الدخول لعرض المراسلات</p>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-sign-in-alt me-1"></i> تسجيل الدخول
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% if current_user.is_authenticated and latest_letters and latest_letters|length > 0 %}
+            <div class="card-footer bg-white border-0">
+                <a href="{{ url_for('letters.list_letters') }}" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="fas fa-list me-1"></i> عرض جميع المراسلات
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- إجراءات سريعة -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header bg-white py-3 border-0">
+                <h6 class="m-0 fw-bold text-primary">
+                    <i class="fas fa-bolt me-2"></i>إجراءات سريعة
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3 col-6">
+                        <a href="{{ url_for('letters.add_incoming') }}" 
+                           class="btn btn-primary btn-quick-action d-flex flex-column justify-content-center align-items-center p-3">
+                            <i class="fas fa-inbox fa-2x mb-3"></i>
+                            <span class="fw-bold">إضافة وارد</span>
+                            <small class="text-white opacity-75 mt-1">إضافة مراسلة واردة جديدة</small>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="{{ url_for('letters.add_outgoing') }}" 
+                           class="btn btn-success btn-quick-action d-flex flex-column justify-content-center align-items-center p-3">
+                            <i class="fas fa-paper-plane fa-2x mb-3"></i>
+                            <span class="fw-bold">إضافة صادر</span>
+                            <small class="text-white opacity-75 mt-1">إضافة مراسلة صادرة جديدة</small>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="{{ url_for('search.advanced_search') }}" 
+                           class="btn btn-info btn-quick-action d-flex flex-column justify-content-center align-items-center p-3">
+                            <i class="fas fa-search fa-2x mb-3"></i>
+                            <span class="fw-bold">بحث متقدم</span>
+                            <small class="text-white opacity-75 mt-1">بحث في جميع المراسلات</small>
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="{{ url_for('archive.archive_list') }}" 
+                           class="btn btn-warning btn-quick-action d-flex flex-column justify-content-center align-items-center p-3">
+                            <i class="fas fa-archive fa-2x mb-3"></i>
+                            <span class="fw-bold">الأرشيف</span>
+                            <small class="text-white opacity-75 mt-1">عرض المراسلات المؤرشفة</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- معلومات النظام -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card border-0 bg-light">
+            <div class="card-body py-3">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-info-circle text-primary me-3 fs-4"></i>
+                            <div>
+                                <h6 class="mb-1">معلومات النظام</h6>
+                                <p class="text-muted small mb-0">
+                                    النظام يعمل بشكل طبيعي | 
+                                    آخر تحديث: {{ now().strftime('%Y-%m-%d %H:%M') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="btn-group">
+                            <a href="{{ url_for('search.advanced_search') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-search me-1"></i> بحث
+                            </a>
+                            <a href="{{ url_for('letters.list_letters') }}" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-list me-1"></i> قائمة المراسلات
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-info" onclick="refreshStats()">
+                                <i class="fas fa-sync-alt me-1"></i> تحديث
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// مخطط المراسلات
+let lettersChart = null;
+
+function initializeChart() {
+    const ctx = document.getElementById('lettersChart').getContext('2d');
+    
+    lettersChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['واردة', 'صادرة', 'مؤرشفة'],
+            datasets: [{
+                data: [
+                    {{ get_stats().incoming_count if current_user.is_authenticated else 0 }},
+                    {{ get_stats().outgoing_count if current_user.is_authenticated else 0 }},
+                    {{ get_stats().archived_count if current_user.is_authenticated else 0 }}
+                ],
+                backgroundColor: [
+                    'rgba(13, 110, 253, 0.8)',
+                    'rgba(25, 135, 84, 0.8)',
+                    'rgba(255, 193, 7, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(13, 110, 253, 1)',
+                    'rgba(25, 135, 84, 1)',
+                    'rgba(255, 193, 7, 1)'
+                ],
+                borderWidth: 2,
+                hoverOffset: 15
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    rtl: true,
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        font: {
+                            family: "'Cairo', sans-serif",
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    rtl: true,
+                    bodyFont: {
+                        family: "'Cairo', sans-serif"
+                    },
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.raw || 0;
+                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            let percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// تحديث الإحصائيات
+function refreshStats() {
+    const refreshBtn = event?.target || document.querySelector('[onclick="refreshStats()"]');
+    const originalHtml = refreshBtn.innerHTML;
+    refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> تحديث...';
+    refreshBtn.disabled = true;
+
+    fetch('/api/stats')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('فشل في جلب البيانات');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // تحديث الأرقام
+                document.getElementById('incomingCount').textContent = data.incoming_count;
+                document.getElementById('outgoingCount').textContent = data.outgoing_count;
+                document.getElementById('archivedCount').textContent = data.archived_count;
+                document.getElementById('usersCount').textContent = data.users_count;
+                document.getElementById('totalLetters').textContent = data.total_letters;
+                
+                // تحديث المراسلات النشطة
+                const activeLetters = data.incoming_count + data.outgoing_count;
+                document.getElementById('activeLetters').textContent = activeLetters;
+                
+                // تحديث نسبة الأرشيف
+                const archivePercent = data.total_letters > 0 
+                    ? ((data.archived_count / data.total_letters) * 100).toFixed(1) + '%'
+                    : '0%';
+                document.getElementById('archivePercent').textContent = archivePercent;
+                
+                // تحديث المتوسط
+                const avgLetters = data.users_count > 0 
+                    ? (data.total_letters / data.users_count).toFixed(1)
+                    : '0';
+                document.getElementById('avgLetters').textContent = avgLetters;
+                
+                // تحديث المخطط
+                if (lettersChart) {
+                    lettersChart.data.datasets[0].data = [
+                        data.incoming_count,
+                        data.outgoing_count,
+                        data.archived_count
+                    ];
+                    lettersChart.update();
+                }
+                
+                // رسالة نجاح
+                showToast('تم تحديث الإحصائيات بنجاح', 'success');
+            } else {
+                showToast('حدث خطأ في تحديث الإحصائيات', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating stats:', error);
+            showToast('فشل في تحديث الإحصائيات', 'danger');
+        })
+        .finally(() => {
+            refreshBtn.innerHTML = originalHtml;
+            refreshBtn.disabled = false;
+        });
+}
+
+// عرض رسالة Toast
+function showToast(message, type = 'info') {
+    // إنشاء toast إذا لم يكن موجوداً
+    let toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toastContainer';
+        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        document.body.appendChild(toastContainer);
+    }
+    
+    const toastId = 'toast-' + Date.now();
+    const toast = document.createElement('div');
+    toast.id = toastId;
+    toast.className = `toast align-items-center text-bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    // عرض Toast
+    const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+    bsToast.show();
+    
+    // إزالة Toast بعد الاختفاء
+    toast.addEventListener('hidden.bs.toast', function () {
+        toast.remove();
+    });
+}
+
+// تحديث الإحصائيات كل 60 ثانية
+let statsInterval = null;
+
+function startStatsAutoRefresh() {
+    // إيقاف التحديث التلقائي السابق إذا كان يعمل
+    if (statsInterval) {
+        clearInterval(statsInterval);
+    }
+    
+    // بدء التحديث التلقائي الجديد
+    statsInterval = setInterval(refreshStats, 60000);
+}
+
+// تهيئة الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    // تهيئة المخطط
+    if (document.getElementById('lettersChart')) {
+        initializeChart();
+    }
+    
+    // بدء التحديث التلقائي إذا كان المستخدم مسجلاً
+    {% if current_user.is_authenticated %}
+    startStatsAutoRefresh();
+    {% endif %}
+    
+    // إضافة تأثيرات للبطاقات
+    document.querySelectorAll('.card-stat').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+
+// تنظيف عند ترك الصفحة
+window.addEventListener('beforeunload', function() {
+    if (statsInterval) {
+        clearInterval(statsInterval);
+    }
+});
+</script>
+{% endblock %}

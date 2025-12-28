@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}بحث سريع{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h2><i class="fas fa-search me-2"></i>البحث السريع</h2>
+    <p class="text-muted">نتائج البحث عن: "<strong>{{ keyword }}</strong>"</p>
+</div>
+
+{% if results %}
+<div class="card">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="fas fa-list"></i> نتائج البحث ({{ results|length }})</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>رقم الرسالة</th>
+                        <th>رقم الوصول</th>
+                        <th>النوع</th>
+                        <th>الباعث</th>
+                        <th>الموضوع</th>
+                        <th>تاريخ الرسالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for letter in results %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ letter.reference_number }}</strong></td>
+                        <td><code>{{ letter.access_number }}</code></td>
+                        <td>
+                            {% if letter.letter_type == 'incoming' %}
+                            <span class="badge bg-primary">وارد</span>
+                            {% else %}
+                            <span class="badge bg-success">صادر</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ letter.sender }}</td>
+                        <td>{{ letter.subject[:50] }}{% if letter.subject|length > 50 %}...{% endif %}</td>
+                        <td>{{ letter.letter_date.strftime('%Y/%m/%d') }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('letters.view_letter', letter_id=letter.id) }}" 
+                                   class="btn btn-info" title="عرض">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <a href="{{ url_for('search.advanced_search') }}" class="btn btn-outline-primary">
+            <i class="fas fa-search-plus"></i> بحث متقدم
+        </a>
+        <a href="{{ url_for('letters.list_letters') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-list"></i> جميع المراسلات
+        </a>
+    </div>
+    <div class="col-md-6 text-end">
+        <div class="alert alert-info mb-0">
+            <i class="fas fa-info-circle"></i>
+            تم العثور على {{ results|length }} نتيجة للبحث عن "{{ keyword }}"
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+    <h5>لا توجد نتائج</h5>
+    <p class="text-muted">لم يتم العثور على مراسلات تطابق "{{ keyword }}"</p>
+    <div class="mt-4">
+        <a href="{{ url_for('search.advanced_search') }}" class="btn btn-primary">
+            <i class="fas fa-search-plus"></i> بحث متقدم
+        </a>
+        <a href="{{ url_for('letters.list_letters') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right"></i> العودة للقائمة
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

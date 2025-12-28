@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}الأرشيف{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h2><i class="fas fa-archive me-2"></i>الأرشيف</h2>
+    <p class="text-muted">عرض جميع المراسلات المؤرشفة</p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>رقم الرسالة</th>
+                        <th>رقم الوصول</th>
+                        <th>النوع</th>
+                        <th>الباعث</th>
+                        <th>الموضوع</th>
+                        <th>تاريخ الأرشيف</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if letters.items %}
+                        {% for letter in letters.items %}
+                        <tr>
+                            <td>{{ loop.index + ((letters.page - 1) * letters.per_page) }}</td>
+                            <td><strong>{{ letter.reference_number }}</strong></td>
+                            <td><code>{{ letter.access_number }}</code></td>
+                            <td>
+                                {% if letter.letter_type == 'incoming' %}
+                                <span class="badge bg-primary">وارد</span>
+                                {% else %}
+                                <span class="badge bg-success">صادر</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ letter.sender }}</td>
+                            <td>{{ letter.subject[:50] }}{% if letter.subject|length > 50 %}...{% endif %}</td>
+                            <td>
+                                {% if letter.archive_date %}
+                                {{ letter.archive_date.strftime('%Y/%m/%d %H:%M') }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('letters.view_letter', letter_id=letter.id) }}" 
+                                       class="btn btn-info" title="عرض">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('archive.restore_letter', letter_id=letter.id) }}" 
+                                       class="btn btn-success" title="استعادة"
+                                       onclick="return confirm('هل تريد استعادة هذه المراسلة من الأرشيف؟')">
+                                        <i class="fas fa-undo"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-archive fa-2x mb-3"></i>
+                                <h5>الأرشيف فارغ</h5>
+                                <p>لا توجد مراسلات مؤرشفة حالياً</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- الترقيم -->
+        {% if letters.pages > 1 %}
+        <nav aria-label="تصفح الصفحات" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if letters.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('archive.archive_list', page=letters.prev_num) }}">
+                        <i class="fas fa-chevron-right"></i> السابق
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-chevron-right"></i> السابق</span>
+                </li>
+                {% endif %}
+                
+                {% for page_num in letters.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == letters.page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('archive.archive_list', page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if letters.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('archive.archive_list', page=letters.next_num) }}">
+                        التالي <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">التالي <i class="fas fa-chevron-left"></i></span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <a href="{{ url_for('letters.list_letters') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-right"></i> العودة لقائمة المراسلات
+        </a>
+    </div>
+    <div class="col-md-6 text-end">
+        <div class="alert alert-info mb-0">
+            <i class="fas fa-info-circle"></i>
+            إجمالي المراسلات المؤرشفة: {{ letters.total }}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}عرض المراسلة - {{ letter.reference_number }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header {% if letter.letter_type == 'incoming' %}bg-primary{% else %}bg-success{% endif %} text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        {% if letter.letter_type == 'incoming' %}
+                        <i class="fas fa-inbox"></i>
+                        {% else %}
+                        <i class="fas fa-paper-plane"></i>
+                        {% endif %}
+                        مراسلة {{ 'واردة' if letter.letter_type == 'incoming' else 'صادرة' }}
+                    </h4>
+                    <div>
+                        <span class="badge bg-light text-dark">
+                            {{ letter.access_number }}
+                        </span>
+                        {% if letter.is_archived %}
+                        <span class="badge bg-secondary">
+                            <i class="fas fa-archive"></i> مؤرشف
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th style="width: 40%;">رقم الرسالة:</th>
+                                <td><strong>{{ letter.reference_number }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>الباعث:</th>
+                                <td>{{ letter.sender }}</td>
+                            </tr>
+                            <tr>
+                                <th>المستلم:</th>
+                                <td>{{ letter.receiver or 'غير محدد' }}</td>
+                            </tr>
+                            <tr>
+                                <th>تاريخ الرسالة:</th>
+                                <td>{{ letter.letter_date.strftime('%Y/%m/%d') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th style="width: 40%;">رقم الوصول:</th>
+                                <td><code>{{ letter.access_number }}</code></td>
+                            </tr>
+                            <tr>
+                                <th>تاريخ الوصول:</th>
+                                <td>{{ letter.access_date.strftime('%Y/%m/%d') }}</td>
+                            </tr>
+                            {% if letter.response_number %}
+                            <tr>
+                                <th>رقم الرد:</th>
+                                <td>{{ letter.response_number }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if letter.response_date %}
+                            <tr>
+                                <th>تاريخ الرد:</th>
+                                <td>{{ letter.response_date.strftime('%Y/%m/%d') }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="mb-4">
+                    <h5>الموضوع</h5>
+                    <div class="alert alert-light">
+                        {{ letter.subject }}
+                    </div>
+                </div>
+                
+                {% if letter.content %}
+                <div class="mb-4">
+                    <h5>محتوى المراسلة</h5>
+                    <div class="card">
+                        <div class="card-body">
+                            {{ letter.content|replace('\n', '<br>')|safe }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- الملفات -->
+                <div class="row">
+                    {% if letter.letter_image %}
+                    <div class="col-md-6 mb-3">
+                        <h6>صورة المراسلة</h6>
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-file-image fa-3x text-primary mb-2"></i>
+                                <p class="mb-1">{{ letter.letter_image }}</p>
+                                <a href="{{ url_for('letters.download_letter_image', filename=letter.letter_image) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download"></i> تحميل
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if attachments %}
+                    <div class="col-md-6 mb-3">
+                        <h6>المرفقات</h6>
+                        {% for attachment in attachments %}
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="fas fa-file me-2"></i>
+                                        {{ attachment }}
+                                    </div>
+                                    <a href="{{ url_for('letters.download_attachment', filename=attachment) }}" 
+                                       class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- معلومات إضافية -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> معلومات إضافية</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <th>تم الإنشاء بواسطة:</th>
+                        <td>{{ letter.creator.full_name if letter.creator else 'غير معروف' }}</td>
+                    </tr>
+                    <tr>
+                        <th>تاريخ الإنشاء:</th>
+                        <td>{{ letter.created_at.strftime('%Y/%m/%d %H:%M') }}</td>
+                    </tr>
+                    <tr>
+                        <th>آخر تعديل:</th>
+                        <td>{{ letter.updated_at.strftime('%Y/%m/%d %H:%M') }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- الإجراءات -->
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-cogs"></i> الإجراءات</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('letters.edit_letter', letter_id=letter.id) }}" 
+                       class="btn btn-warning">
+                        <i class="fas fa-edit"></i> تعديل المراسلة
+                    </a>
+                    
+                    {% if not letter.is_archived %}
+                    <a href="{{ url_for('letters.archive_letter', letter_id=letter.id) }}" 
+                       class="btn btn-secondary"
+                       onclick="return confirm('هل تريد أرشفة هذه المراسلة؟')">
+                        <i class="fas fa-archive"></i> أرشفة المراسلة
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('archive.restore_letter', letter_id=letter.id) }}" 
+                       class="btn btn-info"
+                       onclick="return confirm('هل تريد استعادة هذه المراسلة من الأرشيف؟')">
+                        <i class="fas fa-undo"></i> استعادة من الأرشيف
+                    </a>
+                    {% endif %}
+                    
+                    {% if current_user.is_admin() %}
+                    <a href="{{ url_for('letters.delete_letter', letter_id=letter.id) }}" 
+                       class="btn btn-danger"
+                       onclick="return confirm('هل أنت متأكد من حذف هذه المراسلة؟')">
+                        <i class="fas fa-trash"></i> حذف المراسلة
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('letters.list_letters') }}" 
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right"></i> رجوع للقائمة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
